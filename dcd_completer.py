@@ -86,7 +86,7 @@ class DCDCompleter(Completer):
         try:
             completionData = self._ExecClient('-c %d' % cursorPos, filename)
             if completionData[1]:
-                error('Completion error from dcd-client:\n' + completionData[1])
+                error('Completion error from dcd-client:\n' + str(completionData[1]))
                 return []
 
             completions = [self._CreateCompletionData(line, contents, cursorPos, filename)
