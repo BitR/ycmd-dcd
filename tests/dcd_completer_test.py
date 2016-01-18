@@ -44,10 +44,10 @@ class DCDCompleter_test( object ):
     result = self._completer.ComputeCandidates(request)[0:1]
 
     eq_( result, [ {
-        'menu_text': 'abs',
+        'menu_text': 'abs (doc)',
         'insertion_text': 'abs',
         'kind': 'f',
-        'detailed_info': 'abs: f\n' + output}
+        'detailed_info': 'abs: f\n' + output.strip()}
       ] )
 
 class MockPipe(object):

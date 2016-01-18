@@ -124,6 +124,9 @@ class DCDCompleter(Completer):
             name = name.split('.')[-1]
             longname = name + ' (' + longname + ')'
 
+        if docText:
+            longname += ' (doc)'
+
         return responses.BuildCompletionData(
                 insertion_text = name,
                 menu_text = longname,
@@ -151,7 +154,7 @@ class DCDCompleter(Completer):
             if docData[1]:
                 error('Doc error from dcd-client:\n' + docData[1])
             else:
-                docText = docData[0]
+                docText = docData[0].strip()
             return docText
         finally:
             os.unlink(tmpfilename)
