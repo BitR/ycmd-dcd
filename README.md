@@ -1,6 +1,6 @@
 # ycmd-dcd
 **A DCD wrapper for YouCompleteMe**
-> D completion support for vim
+> D completion support for [ycmd](https://github.com/Valloric/ycmd)
 
 Ycmd-dcd is a plugin for [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) that adds completion support for the [D](https://github.com/D-Programming-Language) programming language.
 
