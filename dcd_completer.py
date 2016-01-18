@@ -117,7 +117,7 @@ class DCDCompleter(Completer):
         name, kind = line.split('\t')
 
         imports = self.getImports(contents)
-        docText = self.getDocText(name, imports)
+        docText = self.getDocText(name, cursorPos, contents, imports)
 
         longname = name
         if '.' in name:
@@ -141,11 +141,10 @@ class DCDCompleter(Completer):
             [line for line in contents.splitlines()
             if line.startswith('import') and line.strip().endswith(';')])
 
-    def getDocText(self, symbol, imports):
+    def getDocText(self, symbol, cursorPos, contents, imports):
         tmpfile, tmpfilename  = tempfile.mkstemp()
         try:
-            text = imports + '\n'
-            text += symbol
+            text = contents + ';' + symbol
             cursorPos = len(text)
             os.write(tmpfile, text)
             os.close(tmpfile)

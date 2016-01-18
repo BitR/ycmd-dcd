@@ -6,12 +6,13 @@ Ycmd-dcd is a plugin for [YouCompleteMe](https://github.com/Valloric/YouComplete
 
 Requirements:
 - [YouCompleteMe](https://github.com/Valloric/YouCompleteMe)
+- [Vundle](https://github.com/VundleVim/Vundle.vim) (unless you've configured [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) by hand)
 
 ## Build and install DCD
 - See the [DCD github page](https://github.com/Hackerpilot/DCD).
 
 ## Vundle instructions:
-- Make sure you have [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) added to you Vundle plugin list
+- Make sure you have [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) added to your Vundle plugin list
 - Clone this repo into the YouCompleteMe bundle:
 
         git clone https://github.com/BitR/ycmd-dcd \
