@@ -73,51 +73,40 @@ class DCDCompleter(Completer):
                 break
 
     def _Suggest(self, filename, linenum, column, contents):
-        dirtyfile = None
-        if contents:
-            dirtyfile, dirtyfilename = tempfile.mkstemp()
-            os.write(dirtyfile, contents)
-            os.close(dirtyfile)
-        else:
+        if not contents:
             with open(filename, 'r') as f:
                 contents = f.read()
         cursorPos = self.getCursorPos(linenum, column, contents) - 1
-        filename = filename if not dirtyfile else dirtyfilename
         try:
-            completionData = self._ExecClient('-c %d' % cursorPos, filename)
+            completionData = self._ExecClient('-c %d' % cursorPos, contents)
             if completionData[1]:
                 error('Completion error from dcd-client:\n' + str(completionData[1]))
                 return []
 
-            completions = [self._CreateCompletionData(line, contents, cursorPos, filename)
+            completions = [self._CreateCompletionData(line, contents)
                     for line in completionData[0].splitlines()
                     if not line.strip() in ['identifiers', '']]
             return completions
         except KeyboardInterrupt:
             pass
-        finally:
-            if dirtyfile:
-                os.unlink(dirtyfilename)
         return []
 
     def getCursorPos(self, linenum, column, contents):
         endingsLength = linenum if contents.find('\r\n') < 0 else linenum * 2
         return len(''.join(contents.splitlines()[:linenum-1])) + endingsLength + column - 1
 
-    def _ExecClient(self, cmd, filename):
-        cmd += ' ' + filename
+    def _ExecClient(self, cmd, contents):
         args = [self._binary] + cmd.split(' ')
         popen = self._popener(args, executable = self._binary,
                 stdin = PIPE, stdout = PIPE, stderr = PIPE)
-        return popen.communicate()
+        return popen.communicate(contents)
 
-    def _CreateCompletionData(self, line, contents, cursorPos, filename):
+    def _CreateCompletionData(self, line, contents):
         if line.find('\t') < 0:
             return []
         name, kind = line.split('\t')
 
-        imports = self.getImports(contents)
-        docText = self.getDocText(name, cursorPos, contents, imports)
+        docText = self.getDocText(name, contents)
 
         longname = name
         if '.' in name:
@@ -141,20 +130,12 @@ class DCDCompleter(Completer):
             [line for line in contents.splitlines()
             if line.startswith('import') and line.strip().endswith(';')])
 
-    def getDocText(self, symbol, cursorPos, contents, imports):
-        tmpfile, tmpfilename  = tempfile.mkstemp()
-        try:
-            text = contents + ';' + symbol
-            cursorPos = len(text)
-            os.write(tmpfile, text)
-            os.close(tmpfile)
+    def getDocText(self, symbol, contents):
+        text = contents + ';' + symbol
 
-            docData = self._ExecClient('-d -c %d' % (cursorPos - 1), tmpfilename)
-            if docData[1]:
-                error('Doc error from dcd-client:\n' + docData[1])
-            else:
-                docText = docData[0].strip()
-            return docText
-        finally:
-            os.unlink(tmpfilename)
-        return ''
+        docData = self._ExecClient('-d -c %d' % (len(text) - 1), text)
+        if docData[1]:
+            error('Doc error from dcd-client:\n' + docData[1])
+        else:
+            docText = docData[0].strip()
+        return docText
