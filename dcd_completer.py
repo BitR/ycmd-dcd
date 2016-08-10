@@ -57,8 +57,7 @@ class DCDCompleter(Completer):
         filepath = request_data['filepath']
         linenum = request_data['line_num']
         colnum = request_data['column_num']
-        contents = utils.ToUtf8IfNeeded(
-            request_data['file_data'][filepath]['contents'])
+        contents = request_data['file_data'][filepath]['contents']
         try:
             return [sug for sug in self._Suggest(filepath, linenum, colnum, contents) if sug]
         except:
