@@ -8,6 +8,7 @@ import logging
 import itertools
 import time
 import traceback
+import re
 from threading import Thread
 from Queue import Queue, Empty
 
@@ -34,6 +35,8 @@ def debug(msg):
     log(logging.DEBUG, msg)
 
 class DCDCompleter(Completer):
+    newline_re = re.compile(r'([^\\])\\n')
+
     def __init__(self, user_options):
         super(DCDCompleter, self).__init__(user_options)
         self._popener = utils.SafePopen
@@ -119,9 +122,8 @@ class DCDCompleter(Completer):
                 insertion_text = name,
                 menu_text = longname,
                 kind = kind,
-                detailed_info = '%s: %s\n%s' %
-                    (name, kind, docText
-                        .replace('\\n', '\n'))
+                detailed_info = DCDCompleter.newline_re.subn('\\1\n', docText)[0]
+                        .replace('\\\\', '\\').rstrip('\n')
                 )
 
     def getImports(self, contents):
@@ -129,12 +131,42 @@ class DCDCompleter(Completer):
             [line for line in contents.splitlines()
             if line.startswith('import') and line.strip().endswith(';')])
 
+    def getSymbolDef(self, symbol, contents):
+        text = contents + ';' + symbol
+
+        symData = self._ExecClient('-l -c %d' % (len(text) - 1), text)
+        if symData[1]:
+            return None
+
+        symText = symData[0].strip()
+
+        if not '\t' in symText:
+            return
+
+        symFilename, symPosition = symText.split('\t')
+        if os.path.exists(symFilename):
+            symbol = ''
+            with open(symFilename, 'r') as f:
+                f.seek(int(symPosition))
+                while f.tell() > 0 and f.read(1) != '\n':
+                    f.seek(-2, 1)
+
+                for i, line in enumerate(f):
+                    if i == 0:
+                        line = line.lstrip(' \t')
+                    symbol += line
+                    if ')' in line:
+                        break
+
+            return symbol
+
     def getDocText(self, symbol, contents):
         text = contents + ';' + symbol
 
+        symbolDef = self.getSymbolDef(symbol, contents) or ''
+
         docData = self._ExecClient('-d -c %d' % (len(text) - 1), text)
-        if docData[1]:
-            error('Doc error from dcd-client:\n' + docData[1])
-        else:
+        if not docData[1]:
             docText = docData[0].strip()
-        return docText
+
+        return symbolDef + (docText or '')

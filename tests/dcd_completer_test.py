@@ -47,7 +47,7 @@ class DCDCompleter_test( object ):
         'menu_text': 'abs (doc)',
         'insertion_text': 'abs',
         'kind': 'f',
-        'detailed_info': 'abs: f\n' + output.strip()}
+        'detailed_info': output.strip()}
       ] )
 
 class MockPipe(object):
