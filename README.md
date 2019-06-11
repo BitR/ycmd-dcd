@@ -5,7 +5,7 @@
 Ycmd-dcd is a plugin for [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) that adds completion support for the [D](https://github.com/D-Programming-Language) programming language.
 
 Requirements:
-- [YouCompleteMe](https://github.com/Valloric/YouCompleteMe)
+- [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) - installed with python3 (python3 ./install.py)
 - [Vundle](https://github.com/VundleVim/Vundle.vim) (unless you've configured [YouCompleteMe](https://github.com/Valloric/YouCompleteMe) by hand)
 
 ## Build and install DCD

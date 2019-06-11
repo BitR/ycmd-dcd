@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
-from Queue import Queue
+from queue import Queue
 from nose.tools import eq_, raises
 from ycmd.completers.d.dcd_completer import DCDCompleter
 from ycmd.request_wrap import RequestWrap
@@ -35,7 +35,7 @@ class DCDCompleter_test( object ):
 
   def ComputeCandidates_test( self ):
     self._completer._binary = DUMMY_BINARY
-    with open( PATH_TO_OUTPUT_FILE, 'r' ) as outputFile:
+    with open( PATH_TO_OUTPUT_FILE, 'rb' ) as outputFile:
       output = outputFile.read()
     mock = MockPopen( stdout=output )
     self._completer._popener = mock
@@ -47,7 +47,7 @@ class DCDCompleter_test( object ):
         'menu_text': 'abs (doc)',
         'insertion_text': 'abs',
         'kind': 'f',
-        'detailed_info': output.strip()}
+        'detailed_info': output.decode('utf-8').strip()}
       ] )
 
 class MockPipe(object):
@@ -70,11 +70,11 @@ class MockPipe(object):
       return None
 
     self.line += 1
-    return self.lines[self.line - 1] + '\n'
+    return self.lines[self.line - 1] + b'\n'
 
   def read(self):
     line = self.readline()
-    data = ''
+    data = b''
     while line:
       data += line
       line = self.readline()

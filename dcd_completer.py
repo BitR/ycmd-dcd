@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -10,12 +10,14 @@ import time
 import traceback
 import re
 from threading import Thread
-from Queue import Queue, Empty
+from queue import Queue, Empty
 
 from subprocess import Popen, PIPE
 from ycmd.completers.completer import Completer
 from ycmd import responses
 from ycmd import utils
+
+IncludeSymbolFilename = True
 
 _logger = logging.getLogger(__name__)
 
@@ -39,6 +41,7 @@ class DCDCompleter(Completer):
 
     def __init__(self, user_options):
         super(DCDCompleter, self).__init__(user_options)
+        self.user_options = user_options
         self._popener = utils.SafePopen
         self._binary = utils.PathToFirstExistingExecutable(['dcd-client'])
 
@@ -82,11 +85,11 @@ class DCDCompleter(Completer):
         try:
             completionData = self._ExecClient('-c %d' % cursorPos, contents)
             if completionData[1]:
-                error('Completion error from dcd-client:\n' + str(completionData[1]))
+                error('Completion error from dcd-client:\n' + completionData[1].decode('utf-8'))
                 return []
 
             completions = [self._CreateCompletionData(line, contents)
-                    for line in completionData[0].splitlines()
+                    for line in completionData[0].decode('utf-8').splitlines()
                     if not line.strip() in ['identifiers', '']]
             return completions
         except KeyboardInterrupt:
@@ -101,7 +104,7 @@ class DCDCompleter(Completer):
         args = [self._binary] + cmd.split(' ')
         popen = self._popener(args, executable = self._binary,
                 stdin = PIPE, stdout = PIPE, stderr = PIPE)
-        return popen.communicate(contents)
+        return popen.communicate(contents.encode('utf-8'))
 
     def _CreateCompletionData(self, line, contents):
         if line.find('\t') < 0:
@@ -134,39 +137,43 @@ class DCDCompleter(Completer):
     def getSymbolDef(self, symbol, contents):
         text = contents + ';' + symbol
 
-        symData = self._ExecClient('-l -c %d' % (len(text) - 1), text)
+        symData = self._ExecClient('-l -c %d' % (len(text.encode('utf-8')) - 1), text)
         if symData[1]:
             return None
 
         symText = symData[0].strip()
 
-        if not '\t' in symText:
+        if not b'\t' in symText:
             return
 
-        symFilename, symPosition = symText.split('\t')
+        symFilename, symPosition = symText.split(b'\t')
         if os.path.exists(symFilename):
-            symbol = ''
-            with open(symFilename, 'r') as f:
+            if IncludeSymbolFilename:
+                symbol = symFilename + b'\n'
+            else:
+                symbol = b''
+
+            with open(symFilename, 'rb') as f:
                 f.seek(int(symPosition))
-                while f.tell() > 0 and f.read(1) != '\n':
+                while f.tell() > 0 and f.read(1) != b'\n':
                     f.seek(-2, 1)
 
                 for i, line in enumerate(f):
                     if i == 0:
-                        line = line.lstrip(' \t')
+                        line = line.lstrip(b' \t')
                     symbol += line
-                    if ')' in line:
+                    if b')' in line:
                         break
 
-            return symbol
+            return symbol.decode('utf-8')
 
     def getDocText(self, symbol, contents):
         text = contents + ';' + symbol
 
         symbolDef = self.getSymbolDef(symbol, contents) or ''
 
-        docData = self._ExecClient('-d -c %d' % (len(text) - 1), text)
+        docData = self._ExecClient('-d -c %d' % (len(text.encode('utf-8')) - 1), text)
         if not docData[1]:
-            docText = docData[0].strip()
+            docText = docData[0].decode('utf-8').strip()
 
         return symbolDef + (docText or '')
